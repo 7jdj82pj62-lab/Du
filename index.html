@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PatrimoineNet - Suivi de Patrimoine</title>
+    
+    <!-- PWA iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="PatrimoineNet">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="apple-touch-icon" href="https://placehold.co/180x180/10b981/ffffff?text=PN">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+        /* Custom smooth scroll */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+    </style>
+    
+    <!-- Dynamic Manifest Data URI for PWA -->
+    <link id="pwa-manifest" rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22PatrimoineNet%22%2C%22short_name%22%3A%22Patrimoine%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%2310b981%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2F10b981%2Fffffff%3Ftext%3DPN%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F512x512%2F10b981%2Fffffff%3Ftext%3DPN%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-20">
+
+    <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+        <div class="max-w-4xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-bold text-lg">
+                    <i class="fa-solid fa-vault"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg tracking-tight text-white leading-tight">PatrimoineNet</h1>
+                    <p class="text-xs text-slate-400">Fintech Wealth Dashboard</p>
+                </div>
+            </div>
+            <div class="flex items-center space-x-2">
+                <button onclick="openModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-brand-600/20 flex items-center space-x-1.5 active:scale-95">
+                    <i class="fa-solid fa-plus text-xs"></i>
+                    <span>Ajouter</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow space-y-6">
+        
+        <!-- Net Worth Summary Card -->
+        <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 p-6 shadow-2xl">
+            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+            <div class="flex justify-between items-start mb-2">
+                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Patrimoine Net Total</span>
+                <span id="net-worth-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <i class="fa-solid fa-arrow-trend-up mr-1"></i> Solde Actif
+                </span>
+            </div>
+            <div class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4" id="total-networth">
+                0,00 €
+            </div>
+            
+            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800/80">
+                <div>
+                    <span class="text-xs text-slate-400 block mb-1">Total Actifs (+)</span>
+                    <span class="text-lg sm:text-xl font-bold text-emerald-400" id="total-assets">0,00 €</span>
+                </div>
+                <div>
+                    <span class="text-xs text-slate-400 block mb-1">Total Passifs/Dettes (-)</span>
+                    <span class="text-lg sm:text-xl font-bold text-rose-400" id="total-liabilities">0,00 €</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Navigation Tabs for Views -->
+        <div class="flex space-x-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
+            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-white bg-slate-800 shadow">
+                <i class="fa-solid fa-chart-pie mr-1.5"></i> Aperçu & Graphique
+            </button>
+            <button onclick="switchTab('list')" id="tab-btn-list" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-slate-400 hover:text-white">
+                <i class="fa-solid fa-list-ul mr-1.5"></i> Actifs & Passifs
+            </button>
+            <button onclick="switchTab('guide')" id="tab-btn-guide" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-slate-400 hover:text-white">
+                <i class="fa-solid fa-mobile-screen mr-1.5"></i> Guide iOS & GitHub
+            </button>
+        </div>
+
+        <!-- TAB 1: DASHBOARD & CHART -->
+        <section id="tab-dashboard" class="space-y-6">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                <h3 class="font-bold text-base text-white mb-4 flex items-center justify-between">
+                    <span>Répartition du Patrimoine</span>
+                    <span class="text-xs font-normal text-slate-400">Par Catégorie</span>
+                </h3>
+                <div class="relative w-full h-64 sm:h-72 flex items-center justify-center">
+                    <canvas id="patrimoineChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Quick category breakdown pills -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="category-cards-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- TAB 2: LIST OF ASSETS / LIABILITIES -->
+        <section id="tab-list" class="space-y-4 hidden">
+            <div class="flex justify-between items-center">
+                <h3 class="font-bold text-base text-white">Détail des Postes</h3>
+                <div class="flex space-x-2">
+                    <select id="filter-type" onchange="renderItems()" class="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 outline-none focus:border-brand-500">
+                        <option value="all">Tous types</option>
+                        <option value="asset">Actifs uniquement</option>
+                        <option value="liability">Passifs uniquement</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="space-y-3" id="items-list-container">
+                <!-- Items injected here -->
+            </div>
+        </section>
+
+        <!-- TAB 3: GUIDE PWA iOS & GITHUB -->
+        <section id="tab-guide" class="space-y-6 hidden">
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center space-x-3 text-brand-500">
+                    <i class="fa-brands fa-apple text-2xl"></i>
+                    <h3 class="font-bold text-lg text-white">Installer en PWA sur iOS (iPhone / iPad)</h3>
+                </div>
+                <ol class="list-decimal list-inside space-y-3 text-sm text-slate-300">
+                    <li>Héebergez ce fichier HTML sur <strong class="text-white">GitHub Pages</strong> (voir les étapes ci-dessous).</li>
+                    <li>Ouvrez le lien de votre site dans le navigateur <strong class="text-white">Safari</strong> sur votre iPhone.</li>
+                    <li>Appuyez sur le bouton <strong class="text-white">Partager</strong> <i class="fa-solid fa-arrow-up-from-bracket inline"></i> dans la barre d'outils en bas de Safari.</li>
+                    <li>Faites défiler le menu et sélectionnez <strong class="text-white">« Sur l'écran d'accueil »</strong>.</li>
+                    <li>Confirmez en appuyant sur <strong class="text-brand-400">Ajouter</strong>. L'application s'installera comme une application native plein écran !</li>
+                </ol>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
+                <div class="flex items-center space-x-3 text-brand-500">
+                    <i class="fa-brands fa-github text-2xl"></i>
+                    <h3 class="font-bold text-lg text-white">Hébergement Gratuit sur GitHub Pages</h3>
+                </div>
+                <ul class="space-y-3 text-sm text-slate-300 list-disc list-inside">
+                    <li>Créez un nouveau dépôt (repository) public sur <a href="https://github.com" target="_blank" class="text-brand-400 underline">GitHub</a> (ex: <em>patrimoine-tracker</em>).</li>
+                    <li>Renommez ce fichier HTML en <code class="bg-slate-800 px-2 py-0.5 rounded text-brand-300">index.html</code> et uploadez-le à la racine du dépôt.</li>
+                    <li>Dans votre dépôt GitHub, allez dans l'onglet <strong class="text-white">Settings</strong> > <strong class="text-white">Pages</strong>.</li>
+                    <li>Sous <em>Build and deployment</em>, sélectionnez la branche <code class="bg-slate-800 px-2 py-0.5 rounded text-slate-200">main</code> (ou master) et le dossier <code class="bg-slate-800 px-2 py-0.5 rounded text-slate-200">/ (root)</code>, puis cliquez sur <strong>Save</strong>.</li>
+                    <li>Votre application sera accessible en ligne gratuitement sous quelques minutes !</li>
+                </ul>
+            </div>
+            
+            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-3">
+                <h3 class="font-bold text-base text-white">Sauvegarde & Données</h3>
+                <p class="text-xs text-slate-400 leading-relaxed">
+                    Toutes vos données financières sont stockées localement dans votre navigateur (<code class="text-slate-200">localStorage</code>). Rien n'est envoyé sur un serveur externe, garantissant une confidentialité totale.
+                </p>
+                <div class="flex space-x-3 pt-2">
+                    <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold py-2.5 rounded-xl text-slate-200 border border-slate-700 transition">
+                        <i class="fa-solid fa-download mr-1"></i> Exporter JSON
+                    </button>
+                    <label class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold py-2.5 rounded-xl text-slate-200 border border-slate-700 transition text-center cursor-pointer">
+                        <i class="fa-solid fa-upload mr-1"></i> Importer JSON
+                        <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
+                    </label>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="item-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 id="modal-title" class="font-bold text-lg text-white">Ajouter un poste</h3>
+                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <form id="item-form" onsubmit="saveItem(event)" class="space-y-4">
+                <input type="hidden" id="item-id">
+                
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Nom du poste / Actif / Dette</label>
+                    <input type="text" id="item-name" required placeholder="Ex: Appartement Paris, Livret A, Bitcoin..." 
+                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
+                        <select id="item-type" onchange="updateCategoryOptions()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                            <option value="asset">Actif (+)</option>
+                            <option value="liability">Passif / Dette (-)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Montant (€)</label>
+                        <input type="number" step="0.01" id="item-amount" required placeholder="0.00" 
+                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Catégorie</label>
+                    <select id="item-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                        <!-- Populated dynamically -->
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-medium text-slate-400 mb-1">Notes (Optionnel)</label>
+                    <input type="text" id="item-notes" placeholder="Ex: Résidence principale, PEA Bourse..." 
+                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
+                </div>
+
+                <div class="pt-3 flex space-x-3">
+                    <button type="button" onclick="closeModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-xs font-semibold text-slate-300 transition">
+                        Annuler
+                    </button>
+                    <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-500 py-3 rounded-xl text-xs font-semibold text-white transition shadow-lg shadow-brand-600/20">
+                        Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center space-x-2">
+        <i class="fa-solid fa-circle-check text-brand-500"></i>
+        <span id="toast-msg">Action réussie</span>
+    </div>
+
+    <script>
+        // Categories definition
+        const categories = {
+            asset: [
+                { id: 'real_estate', name: 'Immobilier', icon: 'fa-house', color: '#3b82f6' },
+                { id: 'cash', name: 'Liquidités / Épargne', icon: 'fa-wallet', color: '#10b981' },
+                { id: 'stocks', name: 'Bourse & Placements', icon: 'fa-chart-line', color: '#8b5cf6' },
+                { id: 'crypto', name: 'Cryptomonnaies', icon: 'fa-coins', color: '#f59e0b' },
+                { id: 'other_asset', name: 'Autres Actifs', icon: 'fa-gem', color: '#ec4899' }
+            ],
+            liability: [
+                { id: 'mortgage', name: 'Crédit Immobilier', icon: 'fa-file-invoice-dollar', color: '#ef4444' },
+                { id: 'loan', name: 'Crédit Conso / Autre', icon: 'fa-credit-card', color: '#f43f5e' },
+                { id: 'debt', name: 'Dettes diverses', icon: 'fa-hand-holding-dollar', color: '#fb7185' }
+            ]
+        };
+
+        // Initial default data if localStorage is empty
+        const defaultItems = [
+            { id: '1', name: 'Résidence Principale', type: 'asset', category: 'real_estate', amount: 250000, notes: 'Appartement T3' },
+            { id: '2', name: 'Livret A & LDD', type: 'asset', category: 'cash', amount: 22000, notes: 'Épargne de précaution' },
+            { id: '3', name: 'PEA (ETF World)', type: 'asset', category: 'stocks', amount: 35000, notes: 'Portefeuille long terme' },
+            { id: '4', name: 'Bitcoin & Ethereum', type: 'asset', category: 'crypto', amount: 8500, notes: 'Cold wallet' },
+            { id: '5', name: 'Crédit Immo Résidence', type: 'liability', category: 'mortgage', amount: 180000, notes: 'Capital restant dû' }
+        ];
+
+        let items = JSON.parse(localStorage.getItem('patrimoine_items')) || defaultItems;
+        let patrimoineChart = null;
+
+        // Initialize application on load
+        window.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            updateDashboard();
+            renderItems();
+            updateCategoryOptions();
+        });
+
+        // Tab Navigation Switcher
+        function switchTab(tabId) {
+            ['dashboard', 'list', 'guide'].forEach(id => {
+                document.getElementById(`tab-${id}`).classList.add('hidden');
+                document.getElementById(`tab-btn-${id}`).classList.remove('text-white', 'bg-slate-800', 'shadow');
+                document.getElementById(`tab-btn-${id}`).classList.add('text-slate-400');
+            });
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            document.getElementById(`tab-btn-${tabId}`).classList.add('text-white', 'bg-slate-800', 'shadow');
+            document.getElementById(`tab-btn-${tabId}`).classList.remove('text-slate-400');
+
+            if(tabId === 'dashboard' && patrimoineChart) {
+                patrimoineChart.update();
+            }
+        }
+
+        // Format currency helper
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+        }
+
+        // Calculate and update dashboard metrics
+        function updateDashboard() {
+            let totalAssets = 0;
+            let totalLiabilities = 0;
+
+            items.forEach(item => {
+                const amt = parseFloat(item.amount) || 0;
+                if(item.type === 'asset') totalAssets += amt;
+                else totalLiabilities += amt;
+            });
+
+            const netWorth = totalAssets - totalLiabilities;
+
+            document.getElementById('total-networth').innerText = formatCurrency(netWorth);
+            document.getElementById('total-assets').innerText = formatCurrency(totalAssets);
+            document.getElementById('total-liabilities').innerText = formatCurrency(totalLiabilities);
+
+            const badge = document.getElementById('net-worth-badge');
+            if(netWorth >= 0) {
+                badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
+                badge.innerHTML = '<i class="fa-solid fa-arrow-trend-up mr-1"></i> Positif';
+            } else {
+                badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
+                badge.innerHTML = '<i class="fa-solid fa-arrow-trend-down mr-1"></i> Déficitaire';
+            }
+
+            updateChartData();
+            updateCategoryCards();
+            localStorage.setItem('patrimoine_items', JSON.stringify(items));
+        }
+
+        // Initialize Chart.js Doughnut Chart
+        function initChart() {
+            const ctx = document.getElementById('patrimoineChart').getContext('2d');
+            patrimoineChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [],
+                        borderWidth: 0,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#94a3b8',
+                                font: { family: 'Inter', size: 11 },
+                                boxWidth: 12,
+                                padding: 15
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return ` ${context.label}: ${formatCurrency(context.raw)}`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '72%'
+                }
+            });
+        }
+
+        // Update Chart Data based on asset categories
+        function updateChartData() {
+            const assetCategories = categories.asset;
+            let labels = [];
+            let data = [];
+            let bgColors = [];
+
+            assetCategories.forEach(cat => {
+                const catTotal = items
+                    .filter(i => i.type === 'asset' && i.category === cat.id)
+                    .reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+                
+                if(catTotal > 0) {
+                    labels.push(cat.name);
+                    data.push(catTotal);
+                    bgColors.push(cat.color);
+                }
+            });
+
+            if(data.length === 0) {
+                labels = ['Aucun actif'];
+                data = [1];
+                bgColors = ['#334155'];
+            }
+
+            patrimoineChart.data.labels = labels;
+            patrimoineChart.data.datasets[0].data = data;
+            patrimoineChart.data.datasets[0].backgroundColor = bgColors;
+            patrimoineChart.update();
+        }
+
+        // Render summary pills for categories
+        function updateCategoryCards() {
+            const container = document.getElementById('category-cards-container');
+            container.innerHTML = '';
+
+            categories.asset.forEach(cat => {
+                const total = items
+                    .filter(i => i.type === 'asset' && i.category === cat.id)
+                    .reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
+
+                if(total > 0) {
+                    container.innerHTML += `
+                        <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex items-center space-x-3 shadow">
+                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white" style="background-color: ${cat.color}20; color: ${cat.color}">
+                                <i class="fa-solid ${cat.icon} text-sm"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <span class="text-[11px] text-slate-400 block truncate">${cat.name}</span>
+                                <span class="text-sm font-bold text-white">${formatCurrency(total)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+        }
+
+        // Render list of items with filter
+        function renderItems() {
+            const filter = document.getElementById('filter-type').value;
+            const container = document.getElementById('items-list-container');
+            container.innerHTML = '';
+
+            let filtered = items;
+            if(filter !== 'all') {
+                filtered = items.filter(i => i.type === filter);
+            }
+
+            if(filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-10 bg-slate-900 rounded-3xl border border-slate-800">
+                        <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-2"></i>
+                        <p class="text-sm text-slate-400">Aucun élément trouvé.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(item => {
+                const isAsset = item.type === 'asset';
+                const catList = isAsset ? categories.asset : categories.liability;
+                const catObj = catList.find(c => c.id === item.category) || { name: 'Autre', icon: 'fa-tag', color: '#64748b' };
+
+                container.innerHTML += `
+                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow hover:border-slate-700 transition">
+                        <div class="flex items-center space-x-3 overflow-hidden">
+                            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center" style="background-color: ${catObj.color}20; color: ${catObj.color}">
+                                <i class="fa-solid ${catObj.icon}"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="font-semibold text-sm text-white truncate">${escapeHtml(item.name)}</h4>
+                                <div class="flex items-center space-x-2 text-xs text-slate-400">
+                                    <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${catObj.name}</span>
+                                    ${item.notes ? `<span class="truncate">• ${escapeHtml(item.notes)}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-4 flex-shrink-0">
+                            <span class="font-bold text-sm sm:text-base ${isAsset ? 'text-emerald-400' : 'text-rose-400'}">
+                                ${isAsset ? '+' : '-'} ${formatCurrency(item.amount)}
+                            </span>
+                            <div class="flex space-x-1">
+                                <button onclick="editItem('${item.id}')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs transition" title="Modifier">
+                                    <i class="fa-solid fa-pen"></i>
+                                </button>
+                                <button onclick="deleteItem('${item.id}')" class="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs transition" title="Supprimer">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        // Modal open/close controls
+        function openModal(editId = null) {
+            const modal = document.getElementById('item-modal');
+            modal.classList.remove('hidden');
+            document.getElementById('item-form').reset();
+            document.getElementById('item-id').value = '';
+
+            if(editId) {
+                document.getElementById('modal-title').innerText = 'Modifier le poste';
+                const item = items.find(i => i.id === editId);
+                if(item) {
+                    document.getElementById('item-id').value = item.id;
+                    document.getElementById('item-name').value = item.name;
+                    document.getElementById('item-type').value = item.type;
+                    updateCategoryOptions();
+                    document.getElementById('item-category').value = item.category;
+                    document.getElementById('item-amount').value = item.amount;
+                    document.getElementById('item-notes').value = item.notes || '';
+                }
+            } else {
+                document.getElementById('modal-title').innerText = 'Ajouter un poste';
+                updateCategoryOptions();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('item-modal').classList.add('hidden');
+        }
+
+        // Update category select options based on Asset vs Liability type
+        function updateCategoryOptions() {
+            const type = document.getElementById('item-type').value;
+            const select = document.getElementById('item-category');
+            select.innerHTML = '';
+
+            const list = type === 'asset' ? categories.asset : categories.liability;
+            list.forEach(cat => {
+                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+            });
+        }
+
+        // Save (Add or Update) item
+        function saveItem(e) {
+            e.preventDefault();
+            const id = document.getElementById('item-id').value;
+            const name = document.getElementById('item-name').value;
+            const type = document.getElementById('item-type').value;
+            const category = document.getElementById('item-category').value;
+            const amount = parseFloat(document.getElementById('item-amount').value) || 0;
+            const notes = document.getElementById('item-notes').value;
+
+            if(id) {
+                const index = items.findIndex(i => i.id === id);
+                if(index !== -1) {
+                    items[index] = { id, name, type, category, amount, notes };
+                }
+                showToast("Poste mis à jour avec succès !");
+            } else {
+                const newItem = {
+                    id: Date.now().toString(),
+                    name, type, category, amount, notes
+                };
+                items.push(newItem);
+                showToast("Nouveau poste ajouté !");
+            }
+
+            closeModal();
+            updateDashboard();
+            renderItems();
+        }
+
+        // Edit item shortcut
+        function editItem(id) {
+            openModal(id);
+        }
+
+        // Delete item with custom confirmation feedback
+        function deleteItem(id) {
+            if(confirm("Êtes-vous sûr de vouloir supprimer ce poste ?")) {
+                items = items.filter(i => i.id !== id);
+                updateDashboard();
+                renderItems();
+                showToast("Poste supprimé.");
+            }
+        }
+
+        // Toast notification helper
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            toast.classList.remove('opacity-0', 'pointer-events-none');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // Export data to JSON file
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `patrimoine_backup_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Sauvegarde exportée !");
+        }
+
+        // Import data from JSON file
+        function importData(event) {
+            const fileReader = new FileReader();
+            if(event.target.files[0]) {
+                fileReader.readAsText(event.target.files[0], "UTF-8");
+                fileReader.onload = (e) => {
+                    try {
+                        const parsed = JSON.parse(e.target.result);
+                        if(Array.isArray(parsed)) {
+                            items = parsed;
+                            updateDashboard();
+                            renderItems();
+                            showToast("Données importées avec succès !");
+                        } else {
+                            alert("Format de fichier invalide.");
+                        }
+                    } catch(err) {
+                        alert("Erreur lors de la lecture du fichier JSON.");
+                    }
+                };
+            }
+        }
+
+        // Security escape helper
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>
