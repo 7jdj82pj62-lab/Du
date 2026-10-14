@@ -1,656 +1,1205 @@
 <!DOCTYPE html>
-<html lang="fr" class="dark">
+<html lang="fr" class="h-full bg-slate-950 text-slate-100 dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>PatrimoineNet - Suivi de Patrimoine</title>
-    
-    <!-- PWA iOS Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="PatrimoineNet">
-    <meta name="theme-color" content="#0f172a">
-    <link rel="apple-touch-icon" href="https://placehold.co/180x180/10b981/ffffff?text=PN">
-
-    <!-- Tailwind CSS CDN -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Suivi de Patrimoine</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    colors: {
-                        brand: {
-                            50: '#ecfdf5',
-                            100: '#d1fae5',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                            900: '#064e3b',
-                        }
-                    }
-                }
-            }
-        }
-    </script>
-
-    <!-- Chart.js CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- FontAwesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
-        /* Custom smooth scroll */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
         }
-        ::-webkit-scrollbar-track {
-            background: #1e293b;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #475569;
-            border-radius: 3px;
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
         }
     </style>
-    
-    <!-- Dynamic Manifest Data URI for PWA -->
-    <link id="pwa-manifest" rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22PatrimoineNet%22%2C%22short_name%22%3A%22Patrimoine%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230f172a%22%2C%22theme_color%22%3A%22%2310b981%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F192x192%2F10b981%2Fffffff%3Ftext%3DPN%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fplacehold.co%2F512x512%2F10b981%2Fffffff%3Ftext%3DPN%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-brand-500 selection:text-white pb-20">
+<body class="h-full flex flex-col justify-between overflow-hidden antialiased">
 
-    <header class="sticky top-0 z-40 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 px-4 py-3">
-        <div class="max-w-4xl mx-auto flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-emerald-400 flex items-center justify-center shadow-lg shadow-brand-500/20 text-white font-bold text-lg">
-                    <i class="fa-solid fa-vault"></i>
-                </div>
-                <div>
-                    <h1 class="font-bold text-lg tracking-tight text-white leading-tight">PatrimoineNet</h1>
-                    <p class="text-xs text-slate-400">Fintech Wealth Dashboard</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <button onclick="openModal()" class="bg-brand-600 hover:bg-brand-500 text-white px-3 py-2 rounded-xl text-sm font-medium transition shadow-lg shadow-brand-600/20 flex items-center space-x-1.5 active:scale-95">
-                    <i class="fa-solid fa-plus text-xs"></i>
-                    <span>Ajouter</span>
-                </button>
+    <header class="pt-12 pb-3 px-5 bg-slate-900/80 backdrop-blur-md border-b border-slate-800 shrink-0 sticky top-0 z-10">
+        <div class="flex justify-between items-center">
+            <h1 id="page-title" class="text-xl font-bold tracking-tight text-white">Patrimoine</h1>
+            <div class="w-8 h-8 rounded-full bg-indigo-600/20 text-indigo-400 flex items-center justify-center font-semibold text-xs border border-indigo-500/30">
+                iOS
             </div>
         </div>
     </header>
 
-    <main class="max-w-4xl w-full mx-auto px-4 py-6 flex-grow space-y-6">
-        
-        <!-- Net Worth Summary Card -->
-        <section class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-900 to-slate-800 border border-slate-800 p-6 shadow-2xl">
-            <div class="absolute -right-10 -bottom-10 w-48 h-48 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="flex justify-between items-start mb-2">
-                <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Patrimoine Net Total</span>
-                <span id="net-worth-badge" class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                    <i class="fa-solid fa-arrow-trend-up mr-1"></i> Solde Actif
-                </span>
-            </div>
-            <div class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight mb-4" id="total-networth">
-                0,00 €
-            </div>
-            
-            <div class="grid grid-cols-2 gap-4 pt-4 border-t border-slate-800/80">
-                <div>
-                    <span class="text-xs text-slate-400 block mb-1">Total Actifs (+)</span>
-                    <span class="text-lg sm:text-xl font-bold text-emerald-400" id="total-assets">0,00 €</span>
-                </div>
-                <div>
-                    <span class="text-xs text-slate-400 block mb-1">Total Passifs/Dettes (-)</span>
-                    <span class="text-lg sm:text-xl font-bold text-rose-400" id="total-liabilities">0,00 €</span>
-                </div>
-            </div>
+    <main class="flex-1 overflow-y-auto no-scrollbar p-4 pb-28">
+        <section id="content-patrimoine" class="tab-content block space-y-4">
+            <!-- Rendered dynamically -->
         </section>
 
-        <!-- Navigation Tabs for Views -->
-        <div class="flex space-x-1 bg-slate-900 p-1 rounded-2xl border border-slate-800">
-            <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-white bg-slate-800 shadow">
-                <i class="fa-solid fa-chart-pie mr-1.5"></i> Aperçu & Graphique
-            </button>
-            <button onclick="switchTab('list')" id="tab-btn-list" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-slate-400 hover:text-white">
-                <i class="fa-solid fa-list-ul mr-1.5"></i> Actifs & Passifs
-            </button>
-            <button onclick="switchTab('guide')" id="tab-btn-guide" class="flex-1 py-2.5 text-xs sm:text-sm font-semibold rounded-xl transition text-slate-400 hover:text-white">
-                <i class="fa-solid fa-mobile-screen mr-1.5"></i> Guide iOS & GitHub
-            </button>
-        </div>
-
-        <!-- TAB 1: DASHBOARD & CHART -->
-        <section id="tab-dashboard" class="space-y-6">
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
-                <h3 class="font-bold text-base text-white mb-4 flex items-center justify-between">
-                    <span>Répartition du Patrimoine</span>
-                    <span class="text-xs font-normal text-slate-400">Par Catégorie</span>
-                </h3>
-                <div class="relative w-full h-64 sm:h-72 flex items-center justify-center">
-                    <canvas id="patrimoineChart"></canvas>
-                </div>
+        <section id="content-frais" class="tab-content hidden space-y-4">
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                <span class="text-xs font-medium text-rose-400 uppercase tracking-wider">Frais Annuels Estimés</span>
+                <div id="frais-total-annual" class="text-3xl font-extrabold text-white">0,00 €</div>
+                <p class="text-xs text-slate-400">Impact estimé des frais de gestion et d'enveloppes sur votre patrimoine.</p>
             </div>
 
-            <!-- Quick category breakdown pills -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="category-cards-container">
-                <!-- Dynamically populated -->
-            </div>
-        </section>
-
-        <!-- TAB 2: LIST OF ASSETS / LIABILITIES -->
-        <section id="tab-list" class="space-y-4 hidden">
-            <div class="flex justify-between items-center">
-                <h3 class="font-bold text-base text-white">Détail des Postes</h3>
-                <div class="flex space-x-2">
-                    <select id="filter-type" onchange="renderItems()" class="bg-slate-900 border border-slate-800 text-xs text-slate-300 rounded-xl px-3 py-2 outline-none focus:border-brand-500">
-                        <option value="all">Tous types</option>
-                        <option value="asset">Actifs uniquement</option>
-                        <option value="liability">Passifs uniquement</option>
-                    </select>
-                </div>
-            </div>
-            
-            <div class="space-y-3" id="items-list-container">
-                <!-- Items injected here -->
-            </div>
-        </section>
-
-        <!-- TAB 3: GUIDE PWA iOS & GITHUB -->
-        <section id="tab-guide" class="space-y-6 hidden">
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-                <div class="flex items-center space-x-3 text-brand-500">
-                    <i class="fa-brands fa-apple text-2xl"></i>
-                    <h3 class="font-bold text-lg text-white">Installer en PWA sur iOS (iPhone / iPad)</h3>
-                </div>
-                <ol class="list-decimal list-inside space-y-3 text-sm text-slate-300">
-                    <li>Héebergez ce fichier HTML sur <strong class="text-white">GitHub Pages</strong> (voir les étapes ci-dessous).</li>
-                    <li>Ouvrez le lien de votre site dans le navigateur <strong class="text-white">Safari</strong> sur votre iPhone.</li>
-                    <li>Appuyez sur le bouton <strong class="text-white">Partager</strong> <i class="fa-solid fa-arrow-up-from-bracket inline"></i> dans la barre d'outils en bas de Safari.</li>
-                    <li>Faites défiler le menu et sélectionnez <strong class="text-white">« Sur l'écran d'accueil »</strong>.</li>
-                    <li>Confirmez en appuyant sur <strong class="text-brand-400">Ajouter</strong>. L'application s'installera comme une application native plein écran !</li>
-                </ol>
-            </div>
-
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
-                <div class="flex items-center space-x-3 text-brand-500">
-                    <i class="fa-brands fa-github text-2xl"></i>
-                    <h3 class="font-bold text-lg text-white">Hébergement Gratuit sur GitHub Pages</h3>
-                </div>
-                <ul class="space-y-3 text-sm text-slate-300 list-disc list-inside">
-                    <li>Créez un nouveau dépôt (repository) public sur <a href="https://github.com" target="_blank" class="text-brand-400 underline">GitHub</a> (ex: <em>patrimoine-tracker</em>).</li>
-                    <li>Renommez ce fichier HTML en <code class="bg-slate-800 px-2 py-0.5 rounded text-brand-300">index.html</code> et uploadez-le à la racine du dépôt.</li>
-                    <li>Dans votre dépôt GitHub, allez dans l'onglet <strong class="text-white">Settings</strong> > <strong class="text-white">Pages</strong>.</li>
-                    <li>Sous <em>Build and deployment</em>, sélectionnez la branche <code class="bg-slate-800 px-2 py-0.5 rounded text-slate-200">main</code> (ou master) et le dossier <code class="bg-slate-800 px-2 py-0.5 rounded text-slate-200">/ (root)</code>, puis cliquez sur <strong>Save</strong>.</li>
-                    <li>Votre application sera accessible en ligne gratuitement sous quelques minutes !</li>
-                </ul>
-            </div>
-            
-            <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl space-y-3">
-                <h3 class="font-bold text-base text-white">Sauvegarde & Données</h3>
-                <p class="text-xs text-slate-400 leading-relaxed">
-                    Toutes vos données financières sont stockées localement dans votre navigateur (<code class="text-slate-200">localStorage</code>). Rien n'est envoyé sur un serveur externe, garantissant une confidentialité totale.
-                </p>
-                <div class="flex space-x-3 pt-2">
-                    <button onclick="exportData()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold py-2.5 rounded-xl text-slate-200 border border-slate-700 transition">
-                        <i class="fa-solid fa-download mr-1"></i> Exporter JSON
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-rose-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="percent" class="w-4 h-4"></i> Détail des frais par enveloppe
+                    </span>
+                    <button onclick="addFeeLine()" class="text-xs bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 px-2.5 py-1 rounded-lg border border-rose-500/25 transition">
+                        + Ajouter un support
                     </button>
-                    <label class="flex-1 bg-slate-800 hover:bg-slate-700 text-xs font-semibold py-2.5 rounded-xl text-slate-200 border border-slate-700 transition text-center cursor-pointer">
-                        <i class="fa-solid fa-upload mr-1"></i> Importer JSON
-                        <input type="file" id="import-file" onchange="importData(event)" class="hidden" accept=".json">
-                    </label>
+                </div>
+
+                <div id="fees-list" class="space-y-2 pt-1">
+                    <!-- Rendered by JS -->
                 </div>
             </div>
         </section>
 
+        <section id="content-strategie" class="tab-content hidden space-y-4">
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/30 shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="compass" class="w-4 h-4"></i> Plan d'Investissement Annuel Sur-Mesure
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">Planifié sur l'Année</span>
+                        <div id="strat-target-yearly" class="text-lg font-bold text-indigo-400">0,00 €</div>
+                    </div>
+                    <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">Réalisé / Injecté</span>
+                        <div id="strat-realized-yearly" class="text-lg font-bold text-emerald-400">0,00 €</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center px-1">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                        <i data-lucide="calendar" class="w-4 h-4 text-indigo-400"></i> Planification des 12 Mois
+                    </h3>
+                    <span id="strat-validated-count" class="text-xs text-indigo-400 font-semibold bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">0 / 12 mois validés</span>
+                </div>
+
+                <div id="strat-months-list" class="space-y-3">
+                    <!-- Rendered by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <section id="content-objectifs" class="tab-content hidden space-y-4">
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                <span class="text-xs font-medium text-amber-400 uppercase tracking-wider">Objectifs Financiers & Caps</span>
+                <p class="text-xs text-slate-400">Suivez la progression de vos projets de vie à court, moyen et long terme.</p>
+            </div>
+
+            <div class="space-y-3">
+                <div class="flex justify-between items-center px-1">
+                    <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+                        <i data-lucide="target" class="w-4 h-4 text-amber-400"></i> Mes Objectifs
+                    </h3>
+                    <button onclick="openObjectiveModal()" class="text-xs bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 px-2.5 py-1 rounded-lg border border-amber-500/25 transition flex items-center gap-1">
+                        <i data-lucide="plus" class="w-3.5 h-3.5"></i> Objectif
+                    </button>
+                </div>
+
+                <div id="objectives-list" class="space-y-3">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </section>
+
+        <section id="content-outils" class="tab-content hidden space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Boîte à Outils</h2>
+                    <p class="text-xs text-slate-400">Cash-flow détaillé et simulations</p>
+                </div>
+            </div>
+
+            <!-- Dashboard Capacité d'Épargne -->
+            <div class="p-5 rounded-2xl bg-gradient-to-br from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-500/30 shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="piggy-bank" class="w-4 h-4"></i> Capacité d'Épargne Mensuelle
+                    </span>
+                    <button onclick="startCashflowWizard()" class="text-xs bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 px-3 py-1.5 rounded-xl border border-emerald-500/30 transition flex items-center gap-1 font-medium">
+                        <i data-lucide="sliders" class="w-3.5 h-3.5"></i> Questionnaire
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3 pt-1">
+                    <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">Revenus Nets</span>
+                        <div id="summary-income" class="text-lg font-bold text-emerald-400">0,00 €</div>
+                    </div>
+                    <div class="bg-slate-950/50 p-3 rounded-xl border border-slate-800">
+                        <span class="text-[10px] text-slate-400 block uppercase">Dépenses Courantes</span>
+                        <div id="summary-expenses" class="text-lg font-bold text-rose-400">0,00 €</div>
+                    </div>
+                </div>
+
+                <div class="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20 flex justify-between items-center">
+                    <div>
+                        <span class="text-xs font-medium text-slate-200 block">Reste à épargner / investir</span>
+                        <span id="summary-rate" class="text-[11px] text-emerald-400 font-medium">Taux d'épargne : 0%</span>
+                    </div>
+                    <div id="summary-savings-capacity" class="text-2xl font-black text-emerald-400">
+                        0,00 € / mois
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cash-Flow Récapitulatif -->
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="git-commit" class="w-4 h-4"></i> Cash-Flow Détaillé
+                    </span>
+                    <button onclick="openCashflowModal()" class="text-xs bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 px-2.5 py-1 rounded-lg border border-cyan-500/25 transition">
+                        Vue rapide & édition
+                    </button>
+                </div>
+                
+                <p class="text-xs text-slate-400">Répartition issue de votre questionnaire de trésorerie.</p>
+
+                <div class="space-y-4 pt-2">
+                    <div class="space-y-2">
+                        <div class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider flex justify-between items-center">
+                            <span>1. Entrées (Revenus)</span>
+                            <span id="finary-total-in" class="text-white font-bold">0,00 €</span>
+                        </div>
+                        <div id="finary-list-in" class="space-y-1.5 pl-2 border-l-2 border-emerald-500/30"></div>
+                    </div>
+
+                    <div class="space-y-2 pt-2 border-t border-slate-800">
+                        <div class="text-[11px] font-semibold text-rose-400 uppercase tracking-wider flex justify-between items-center">
+                            <span>2. Sorties & Affectations</span>
+                            <span id="finary-total-out" class="text-white font-bold">0,00 €</span>
+                        </div>
+                        <div id="finary-list-out" class="space-y-2 pl-2 border-l-2 border-rose-500/30"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Simulateur Intérêts Composés -->
+            <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-semibold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                        <i data-lucide="trending-up" class="w-4 h-4"></i> Simulateur d'Intérêts Composés
+                    </span>
+                </div>
+
+                <div class="space-y-3 text-xs">
+                    <div>
+                        <label class="text-slate-400 block mb-1">Capital Initial (€)</label>
+                        <input type="number" id="sim-capital" value="10000" oninput="runSimulator()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div>
+                        <label class="text-slate-400 block mb-1">Versement Mensuel (€)</label>
+                        <input type="number" id="sim-monthly" value="400" oninput="runSimulator()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-slate-400 block mb-1">Rendement Annuel (%)</label>
+                            <input type="number" id="sim-rate" value="7" step="0.5" oninput="runSimulator()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="text-slate-400 block mb-1">Durée : <span id="sim-years-val">10</span> ans</label>
+                            <input type="range" id="sim-years" min="1" max="40" value="10" oninput="runSimulator()" class="w-full accent-indigo-500 mt-2">
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-950/80 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex justify-between items-center text-[10px] text-slate-400">
+                            <span>Évolution du capital dans le temps</span>
+                            <span class="flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 inline-block"></span> Capital Total</span>
+                        </div>
+                        <div class="w-full h-32 relative">
+                            <svg id="sim-chart" class="w-full h-full overflow-visible" viewBox="0 0 300 120" preserveAspectRatio="none">
+                                <!-- Tracé dynamique injecté par JS -->
+                            </svg>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-900">
+                            <span id="chart-label-start">An 0</span>
+                            <span id="chart-label-mid">Mi-parcours</span>
+                            <span id="chart-label-end">An 10</span>
+                        </div>
+                    </div>
+
+                    <div class="pt-2 border-t border-slate-800 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400">Capital final estimé :</span>
+                            <span id="sim-result" class="text-lg font-black text-amber-400">0 €</span>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-500">
+                            <span>Total versé : <strong id="sim-invested" class="text-slate-300">0 €</strong></span>
+                            <span>Intérêts gagnés : <strong id="sim-interest" class="text-emerald-400">0 €</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
     </main>
 
-    <div id="item-modal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div class="bg-slate-900 border border-slate-800 w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-                <h3 id="modal-title" class="font-bold text-lg text-white">Ajouter un poste</h3>
-                <button onclick="closeModal()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition">
-                    <i class="fa-solid fa-xmark"></i>
-                </button>
+    <nav class="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-slate-800/80 px-2 pb-6 pt-2 z-20">
+        <div class="flex justify-around items-center">
+            <button onclick="switchTab('patrimoine', 'Patrimoine')" id="tab-patrimoine" class="nav-btn flex flex-col items-center py-1 px-2 text-indigo-400 transition-colors duration-150">
+                <i data-lucide="wallet" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium tracking-tight">Patrimoine</span>
+            </button>
+
+            <button onclick="switchTab('frais', 'Frais Annuels')" id="tab-frais" class="nav-btn flex flex-col items-center py-1 px-2 text-slate-400 hover:text-slate-200 transition-colors duration-150">
+                <i data-lucide="receipt" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium tracking-tight">Frais</span>
+            </button>
+
+            <button onclick="switchTab('strategie', 'Stratégie Annuelle')" id="tab-strategie" class="nav-btn flex flex-col items-center py-1 px-2 text-slate-400 hover:text-slate-200 transition-colors duration-150">
+                <i data-lucide="compass" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium tracking-tight">Stratégie</span>
+            </button>
+
+            <button onclick="switchTab('objectifs', 'Objectifs')" id="tab-objectifs" class="nav-btn flex flex-col items-center py-1 px-2 text-slate-400 hover:text-slate-200 transition-colors duration-150">
+                <i data-lucide="target" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium tracking-tight">Objectifs</span>
+            </button>
+
+            <button onclick="switchTab('outils', 'Outils')" id="tab-outils" class="nav-btn flex flex-col items-center py-1 px-2 text-slate-400 hover:text-slate-200 transition-colors duration-150">
+                <i data-lucide="wrench" class="w-5 h-5 mb-1"></i>
+                <span class="text-[10px] font-medium tracking-tight">Outils</span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Modal Wizard Questionnaire Cashflow -->
+    <div id="wizard-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 space-y-4 max-h-[90vh] flex flex-col justify-between">
+            <div class="space-y-2">
+                <div class="flex justify-between items-center">
+                    <span id="wizard-step-tag" class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider bg-indigo-500/10 px-2 py-0.5 rounded-full border border-indigo-500/20">Étape 1 sur 7</span>
+                    <button onclick="closeWizard()" class="text-slate-400 hover:text-white p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <h3 id="wizard-step-title" class="text-base font-bold text-white">Titre de l'étape</h3>
+                <p id="wizard-step-desc" class="text-xs text-slate-400">Description...</p>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden mt-2">
+                    <div id="wizard-progress-bar" class="bg-indigo-500 h-full w-1/7 transition-all duration-300"></div>
+                </div>
             </div>
-            
-            <form id="item-form" onsubmit="saveItem(event)" class="space-y-4">
-                <input type="hidden" id="item-id">
-                
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Nom du poste / Actif / Dette</label>
-                    <input type="text" id="item-name" required placeholder="Ex: Appartement Paris, Livret A, Bitcoin..." 
-                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
-                </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Type</label>
-                        <select id="item-type" onchange="updateCategoryOptions()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
-                            <option value="asset">Actif (+)</option>
-                            <option value="liability">Passif / Dette (-)</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-medium text-slate-400 mb-1">Montant (€)</label>
-                        <input type="number" step="0.01" id="item-amount" required placeholder="0.00" 
-                               class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
-                    </div>
-                </div>
+            <div id="wizard-content" class="space-y-2 overflow-y-auto no-scrollbar my-2 max-h-60 p-1">
+                <!-- Dynamique par étape -->
+            </div>
 
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Catégorie</label>
-                    <select id="item-category" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
-                        <!-- Populated dynamically -->
-                    </select>
-                </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-400 mb-1">Notes (Optionnel)</label>
-                    <input type="text" id="item-notes" placeholder="Ex: Résidence principale, PEA Bourse..." 
-                           class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500">
-                </div>
-
-                <div class="pt-3 flex space-x-3">
-                    <button type="button" onclick="closeModal()" class="flex-1 bg-slate-800 hover:bg-slate-700 py-3 rounded-xl text-xs font-semibold text-slate-300 transition">
-                        Annuler
-                    </button>
-                    <button type="submit" class="flex-1 bg-brand-600 hover:bg-brand-500 py-3 rounded-xl text-xs font-semibold text-white transition shadow-lg shadow-brand-600/20">
-                        Enregistrer
-                    </button>
-                </div>
-            </form>
+            <div class="pt-3 border-t border-slate-800 flex gap-2">
+                <button id="wizard-btn-prev" onclick="prevWizardStep()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-medium transition">Précédent</button>
+                <button id="wizard-btn-next" onclick="nextWizardStep()" class="flex-1 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl text-xs font-medium shadow-lg shadow-indigo-600/20 transition">Suivant</button>
+            </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-20 left-1/2 -translate-x-1/2 bg-slate-900 border border-slate-700 text-slate-100 px-4 py-2.5 rounded-2xl shadow-2xl text-xs font-medium transition-all duration-300 opacity-0 pointer-events-none z-50 flex items-center space-x-2">
-        <i class="fa-solid fa-circle-check text-brand-500"></i>
-        <span id="toast-msg">Action réussie</span>
+    <!-- Modal d'édition des enveloppes spécifiques d'un mois -->
+    <div id="month-config-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 space-y-4 max-h-[90vh] flex flex-col justify-between">
+            <div class="space-y-1">
+                <div class="flex justify-between items-center">
+                    <h3 id="month-modal-title" class="text-base font-bold text-white flex items-center gap-2">
+                        <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Configuration du mois
+                    </h3>
+                    <button onclick="closeMonthConfigModal()" class="text-slate-400 hover:text-white p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <p class="text-xs text-slate-400">Définissez vos enveloppes, actifs cibles et montants pour ce mois.</p>
+            </div>
+
+            <div id="month-envelopes-container" class="space-y-2 overflow-y-auto no-scrollbar my-2 max-h-60 p-1">
+                <!-- Rendered by JS -->
+            </div>
+
+            <div class="space-y-2">
+                <button onclick="addMonthEnvelopeField()" class="w-full py-2 border border-dashed border-indigo-500/30 rounded-xl text-indigo-400 text-xs font-medium hover:bg-indigo-500/10 transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Ajouter une ligne d'investissement
+                </button>
+                
+                <button onclick="copyCurrentMonthToAll()" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-medium transition flex items-center justify-center gap-1.5">
+                    <i data-lucide="copy" class="w-3.5 h-3.5 text-indigo-400"></i> Dupliquer cette config sur tous les mois
+                </button>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex gap-2">
+                <button onclick="closeMonthConfigModal()" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-medium">Annuler</button>
+                <button onclick="saveMonthConfig()" class="flex-1 bg-indigo-600 text-white py-2.5 rounded-xl text-xs font-medium shadow-lg shadow-indigo-600/20">Enregistrer</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cashflow Edit Modal -->
+    <div id="cashflow-modal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-lg p-5 space-y-4 max-h-[90vh] flex flex-col justify-between">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="git-commit" class="w-4 h-4 text-cyan-400"></i> Édition du Cash-Flow
+                </h3>
+                <button onclick="closeCashflowModal()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+    <!-- Modal Objectifs -->
+    <div id="objective-modal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md p-5 space-y-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-base font-bold text-white flex items-center gap-2">
+                    <i data-lucide="target" class="w-4 h-4 text-amber-400"></i> Nouvel Objectif
+                </h3>
+                <button onclick="closeObjectiveModal()" class="text-slate-400 hover:text-white p-1">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-1">Nom de l'objectif</label>
+                    <input type="text" id="obj-name" placeholder="ex: Épargne de sécurité, Apport immo..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1">Montant Cible (€)</label>
+                    <input type="number" id="obj-target" placeholder="10000" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1">Montant Actuel (€)</label>
+                    <input type="number" id="obj-current" placeholder="2500" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white font-semibold focus:outline-none focus:border-indigo-500">
+                </div>
+            </div>
+
+            <div class="pt-3 border-t border-slate-800 flex gap-2">
+                <button onclick="closeObjectiveModal()" class="flex-1 bg-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-medium">Annuler</button>
+                <button onclick="saveObjective()" class="flex-1 bg-amber-500 hover:bg-amber-400 text-slate-950 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-amber-500/20">Enregistrer</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // Categories definition
-        const categories = {
-            asset: [
-                { id: 'real_estate', name: 'Immobilier', icon: 'fa-house', color: '#3b82f6' },
-                { id: 'cash', name: 'Liquidités / Épargne', icon: 'fa-wallet', color: '#10b981' },
-                { id: 'stocks', name: 'Bourse & Placements', icon: 'fa-chart-line', color: '#8b5cf6' },
-                { id: 'crypto', name: 'Cryptomonnaies', icon: 'fa-coins', color: '#f59e0b' },
-                { id: 'other_asset', name: 'Autres Actifs', icon: 'fa-gem', color: '#ec4899' }
-            ],
-            liability: [
-                { id: 'mortgage', name: 'Crédit Immobilier', icon: 'fa-file-invoice-dollar', color: '#ef4444' },
-                { id: 'loan', name: 'Crédit Conso / Autre', icon: 'fa-credit-card', color: '#f43f5e' },
-                { id: 'debt', name: 'Dettes diverses', icon: 'fa-hand-holding-dollar', color: '#fb7185' }
-            ]
-        };
+        lucide.createIcons();
 
-        // Initial default data if localStorage is empty
-        const defaultItems = [
-            { id: '1', name: 'Résidence Principale', type: 'asset', category: 'real_estate', amount: 250000, notes: 'Appartement T3' },
-            { id: '2', name: 'Livret A & LDD', type: 'asset', category: 'cash', amount: 22000, notes: 'Épargne de précaution' },
-            { id: '3', name: 'PEA (ETF World)', type: 'asset', category: 'stocks', amount: 35000, notes: 'Portefeuille long terme' },
-            { id: '4', name: 'Bitcoin & Ethereum', type: 'asset', category: 'crypto', amount: 8500, notes: 'Cold wallet' },
-            { id: '5', name: 'Crédit Immo Résidence', type: 'liability', category: 'mortgage', amount: 180000, notes: 'Capital restant dû' }
+        const monthNames = [
+            'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
+            'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
         ];
 
-        let items = JSON.parse(localStorage.getItem('patrimoine_items')) || defaultItems;
-        let patrimoineChart = null;
+        const wizardSteps = [
+            { id: 'revenus', title: 'Entrées / Revenus', desc: 'Vos salaires, primes ou autres sources de revenus mensuels.', defaultFields: [{ name: 'Salaire Net', amount: 2500 }] },
+            { id: 'logement', title: 'Logement', desc: 'Loyer, crédit immobilier, charges de copropriété...', categoryName: 'Logement', defaultFields: [{ name: 'Loyer / Crédit', amount: 900 }, { name: 'Charges locatives', amount: 100 }] },
+            { id: 'transports', title: 'Transports & Factures', desc: 'Abonnements transport, électricité, internet, téléphone...', categoryName: 'Transports & Factures', defaultFields: [{ name: 'Électricité / Gaz', amount: 80 }, { name: 'Internet / Téléphone', amount: 50 }, { name: 'Transport / Carburant', amount: 150 }] },
+            { id: 'vie', title: 'Vie Quotidienne', desc: 'Courses alimentaires, restaurants, loisirs, sport...', categoryName: 'Vie Quotidienne', defaultFields: [{ name: 'Courses alimentaires', amount: 350 }, { name: 'Restaurants & Sorties', amount: 150 }, { name: 'Sport & Loisirs', amount: 40 }] },
+            { id: 'assurances', title: 'Assurances & Provisions', desc: 'Assurance habitation, auto, mutuelle, provisions annuelles...', categoryName: 'Assurances & Provisions', defaultFields: [{ name: 'Mutuelle & Santé', amount: 60 }, { name: 'Assurance Auto / Habitation', amount: 50 }] },
+            { id: 'cadeaux', title: 'Cadeaux & Plaisirs', desc: 'Budget cadeaux (Noël, anniversaires), vacances...', categoryName: 'Cadeaux & Plaisirs', defaultFields: [{ name: 'Cadeaux & Fêtes', amount: 50 }, { name: 'Vacances (Provision)', amount: 100 }] },
+            { id: 'investissements', title: 'Investissements & Épargne', desc: 'Versements programmés sur PEA, Crypto, Livrets...', categoryName: 'Investissements & Épargne', defaultFields: [{ name: 'PEA (Actions / ETF)', amount: 400 }, { name: 'Crypto', amount: 50 }] }
+        ];
 
-        // Initialize application on load
-        window.addEventListener('DOMContentLoaded', () => {
-            initChart();
-            updateDashboard();
-            renderItems();
-            updateCategoryOptions();
-        });
+        let appData = {
+            netWorth: 0,
+            inflows: [{ name: 'Salaire Net', amount: 2500 }],
+            outflows: [
+                { category: 'Logement', items: [{ name: 'Loyer / Crédit', amount: 900 }, { name: 'Charges locatives', amount: 100 }] },
+                { category: 'Transports & Factures', items: [{ name: 'Électricité / Gaz', amount: 80 }, { name: 'Internet / Téléphone', amount: 50 }, { name: 'Transport / Carburant', amount: 150 }] },
+                { category: 'Vie Quotidienne', items: [{ name: 'Courses alimentaires', amount: 350 }, { name: 'Restaurants & Sorties', amount: 150 }, { name: 'Sport & Loisirs', amount: 40 }] },
+                { category: 'Assurances & Provisions', items: [{ name: 'Mutuelle & Santé', amount: 60 }, { name: 'Assurance Auto / Habitation', amount: 50 }] },
+                { category: 'Cadeaux & Plaisirs', items: [{ name: 'Cadeaux & Fêtes', amount: 50 }, { name: 'Vacances (Provision)', amount: 100 }] },
+                { category: 'Investissements & Épargne', items: [{ name: 'PEA (Actions / ETF)', amount: 400 }, { name: 'Crypto', amount: 50 }] }
+            ],
+            fees: [
+                { name: 'PEA Fortuneo', capital: 15000, rate: 0.35 },
+                { name: 'Assurance Vie Linxea', capital: 8000, rate: 0.60 },
+                { name: 'Portefeuille Crypto', capital: 3000, rate: 1.00 }
+            ],
+            objectives: [
+                { id: 1, name: 'Épargne de précaution (6 mois)', target: 12000, current: 8500 },
+                { id: 2, name: 'Apport projet immobilier', target: 30000, current: 14500 },
+                { id: 3, name: 'Premier cap 100k€', target: 100000, current: 26500 }
+            ],
+            envelopeBreakdown: {}
+        };
 
-        // Tab Navigation Switcher
-        function switchTab(tabId) {
-            ['dashboard', 'list', 'guide'].forEach(id => {
-                document.getElementById(`tab-${id}`).classList.add('hidden');
-                document.getElementById(`tab-btn-${id}`).classList.remove('text-white', 'bg-slate-800', 'shadow');
-                document.getElementById(`tab-btn-${id}`).classList.add('text-slate-400');
+        let strategyMonths = Array.from({ length: 12 }, (_, i) => ({
+            monthIndex: i,
+            validated: false,
+            envelopes: [
+                { name: 'PEA', asset: 'Air Liquide', amount: 200 },
+                { name: 'PEA', asset: 'MSCI World', amount: 200 },
+                { name: 'Crypto', asset: 'Bitcoin', amount: 50 }
+            ]
+        }));
+
+        let activeEditingMonthIdx = null;
+        let currentWizardStep = 0;
+
+        function switchTab(tabId, title) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`content-${tabId}`).classList.remove('hidden');
+            document.getElementById('page-title').textContent = title;
+
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('text-indigo-400');
+                btn.classList.add('text-slate-400');
             });
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
-            document.getElementById(`tab-btn-${tabId}`).classList.add('text-white', 'bg-slate-800', 'shadow');
-            document.getElementById(`tab-btn-${tabId}`).classList.remove('text-slate-400');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if(activeBtn) {
+                activeBtn.classList.remove('text-slate-400');
+                activeBtn.classList.add('text-indigo-400');
+            }
+            if(tabId === 'patrimoine') renderPatrimoine();
+            if(tabId === 'frais') renderFees();
+            if(tabId === 'objectifs') renderObjectives();
+        }
 
-            if(tabId === 'dashboard' && patrimoineChart) {
-                patrimoineChart.update();
+        function renderFees() {
+            let totalAnnualFees = 0;
+            let listHTML = '';
+
+            appData.fees.forEach((f, idx) => {
+                const annualCost = (f.capital * (f.rate / 100));
+                totalAnnualFees += annualCost;
+
+                listHTML += `
+                    <div class="p-3 bg-slate-950/60 rounded-xl border border-slate-800 flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <input type="text" value="${f.name}" onchange="updateFee(${idx}, 'name', this.value)" class="bg-transparent font-semibold text-xs text-white focus:outline-none border-b border-transparent focus:border-rose-500">
+                            <button onclick="deleteFee(${idx})" class="text-slate-500 hover:text-rose-400 p-1">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 text-xs">
+                            <div>
+                                <span class="text-[10px] text-slate-500 block">En-cours (€)</span>
+                                <input type="number" value="${f.capital}" onchange="updateFee(${idx}, 'capital', parseFloat(this.value)||0)" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white text-xs">
+                            </div>
+                            <div>
+                                <span class="text-[10px] text-slate-500 block">Frais (%)</span>
+                                <input type="number" step="0.05" value="${f.rate}" onchange="updateFee(${idx}, 'rate', parseFloat(this.value)||0)" class="w-full bg-slate-900 border border-slate-800 rounded px-2 py-1 text-white text-xs">
+                            </div>
+                            <div class="text-right flex flex-col justify-end">
+                                <span class="text-[10px] text-slate-500 block">Coût / an</span>
+                                <span class="font-bold text-rose-400">${annualCost.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('frais-total-annual').textContent = totalAnnualFees.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('fees-list').innerHTML = listHTML || '<p class="text-xs text-slate-500">Aucun support renseigné.</p>';
+            lucide.createIcons();
+        }
+
+        function updateFee(index, field, value) {
+            appData.fees[index][field] = value;
+            renderFees();
+        }
+
+        function addFeeLine() {
+            appData.fees.push({ name: 'Nouveau support', capital: 5000, rate: 0.50 });
+            renderFees();
+        }
+
+        function deleteFee(index) {
+            appData.fees.splice(index, 1);
+            renderFees();
+        }
+
+        function renderObjectives() {
+            const list = document.getElementById('objectives-list');
+            let html = '';
+
+            appData.objectives.forEach(obj => {
+                const pct = Math.min(100, Math.round((obj.current / obj.target) * 100));
+                html += `
+                    <div class="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-2">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">${obj.name}</h4>
+                                <span class="text-xs text-slate-400">${obj.current.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})} / <strong class="text-slate-200">${obj.target.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</strong></span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-extrabold text-amber-400 bg-amber-500/10 px-2.5 py-1 rounded-full border border-amber-500/20">${pct}%</span>
+                                <button onclick="deleteObjective(${obj.id})" class="text-slate-500 hover:text-rose-400 p-1">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div class="bg-gradient-to-r from-amber-500 to-emerald-400 h-full transition-all duration-500" style="width: ${pct}%"></div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            list.innerHTML = html || '<p class="text-xs text-slate-500">Aucun objectif créé pour le moment.</p>';
+            lucide.createIcons();
+        }
+
+        function openObjectiveModal() {
+            document.getElementById('objective-modal').classList.remove('hidden');
+        }
+
+        function closeObjectiveModal() {
+            document.getElementById('objective-modal').classList.add('hidden');
+        }
+
+        function saveObjective() {
+            const name = document.getElementById('obj-name').value.trim();
+            const target = parseFloat(document.getElementById('obj-target').value) || 0;
+            const current = parseFloat(document.getElementById('obj-current').value) || 0;
+
+            if(name && target > 0) {
+                appData.objectives.push({
+                    id: Date.now(),
+                    name,
+                    target,
+                    current
+                });
+                closeObjectiveModal();
+                renderObjectives();
+                document.getElementById('obj-name').value = '';
+                document.getElementById('obj-target').value = '';
+                document.getElementById('obj-current').value = '';
             }
         }
 
-        // Format currency helper
-        function formatCurrency(amount) {
-            return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(amount);
+        function deleteObjective(id) {
+            appData.objectives = appData.objectives.filter(o => o.id !== id);
+            renderObjectives();
         }
 
-        // Calculate and update dashboard metrics
-        function updateDashboard() {
-            let totalAssets = 0;
-            let totalLiabilities = 0;
+        function renderStrategy() {
+            let yearlyTarget = 0;
+            let yearlyRealized = 0;
+            let validatedCount = 0;
 
-            items.forEach(item => {
-                const amt = parseFloat(item.amount) || 0;
-                if(item.type === 'asset') totalAssets += amt;
-                else totalLiabilities += amt;
+            strategyMonths.forEach(m => {
+                const monthTotal = m.envelopes.reduce((sum, env) => sum + env.amount, 0);
+                yearlyTarget += monthTotal;
+                if(m.validated) {
+                    yearlyRealized += monthTotal;
+                    validatedCount++;
+                }
             });
 
-            const netWorth = totalAssets - totalLiabilities;
+            document.getElementById('strat-target-yearly').textContent = yearlyTarget.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('strat-realized-yearly').textContent = yearlyRealized.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('strat-validated-count').textContent = `${validatedCount} / 12 mois validés`;
 
-            document.getElementById('total-networth').innerText = formatCurrency(netWorth);
-            document.getElementById('total-assets').innerText = formatCurrency(totalAssets);
-            document.getElementById('total-liabilities').innerText = formatCurrency(totalLiabilities);
+            const monthsList = document.getElementById('strat-months-list');
+            let monthsHTML = '';
 
-            const badge = document.getElementById('net-worth-badge');
-            if(netWorth >= 0) {
-                badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                badge.innerHTML = '<i class="fa-solid fa-arrow-trend-up mr-1"></i> Positif';
-            } else {
-                badge.className = "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                badge.innerHTML = '<i class="fa-solid fa-arrow-trend-down mr-1"></i> Déficitaire';
-            }
+            strategyMonths.forEach((m, idx) => {
+                const monthTotal = m.envelopes.reduce((sum, env) => sum + env.amount, 0);
+                const isValidated = m.validated;
 
-            updateChartData();
-            updateCategoryCards();
-            localStorage.setItem('patrimoine_items', JSON.stringify(items));
+                let envsPills = m.envelopes.map(e => `
+                    <span class="text-[10px] bg-slate-950/80 px-2 py-1 rounded-lg border border-slate-800 text-slate-300 flex items-center gap-1.5">
+                        <span class="font-bold text-indigo-400">${e.name || 'Enveloppe'}</span>
+                        ${e.asset ? `<span class="bg-indigo-500/20 text-indigo-300 px-1.5 py-0.2 rounded border border-indigo-500/30 font-medium text-[9px]">${e.asset}</span>` : ''}
+                        : <strong class="text-white">${e.amount} €</strong>
+                    </span>
+                `).join('');
+
+                if(m.envelopes.length === 0) {
+                    envsPills = `<span class="text-[10px] text-slate-500 italic">Aucune enveloppe configurée</span>`;
+                }
+
+                monthsHTML += `
+                    <div class="p-4 rounded-2xl border transition-all duration-200 space-y-3 ${
+                        isValidated 
+                            ? 'bg-emerald-950/20 border-emerald-500/40' 
+                            : 'bg-slate-900 border-slate-800'
+                    }">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs ${
+                                    isValidated 
+                                        ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
+                                        : 'bg-slate-800 text-slate-400 border border-slate-700'
+                                }">
+                                    ${idx + 1}
+                                </div>
+                                <div>
+                                    <div class="text-sm font-bold text-white flex items-center gap-2">
+                                        ${monthNames[idx]}
+                                        ${isValidated ? '<span class="text-[9px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/30 font-medium">Injecté au patrimoine</span>' : ''}
+                                    </div>
+                                    <div class="text-xs text-slate-400">
+                                        Total : <strong class="${isValidated ? 'text-emerald-300' : 'text-indigo-400'}">${monthTotal.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</strong>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <button onclick="openMonthConfigModal(${idx})" class="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs flex items-center gap-1 font-medium">
+                                    <i data-lucide="settings-2" class="w-3.5 h-3.5 text-indigo-400"></i>
+                                    Gérer
+                                </button>
+                                <button onclick="toggleValidateMonth(${idx})" class="px-3 py-2 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 ${
+                                    isValidated 
+                                        ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400 shadow-md shadow-emerald-500/20' 
+                                        : 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-md shadow-indigo-600/20'
+                                }">
+                                    <i data-lucide="${isValidated ? 'check-circle-2' : 'circle'}" class="w-3.5 h-3.5"></i>
+                                    ${isValidated ? 'Validé' : 'Valider'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5 pt-1 border-t border-slate-800/60">
+                            ${envsPills}
+                        </div>
+                    </div>
+                `;
+            });
+
+            monthsList.innerHTML = monthsHTML;
+            lucide.createIcons();
+            updatePatrimoineFromStrategy();
         }
 
-        // Initialize Chart.js Doughnut Chart
-        function initChart() {
-            const ctx = document.getElementById('patrimoineChart').getContext('2d');
-            patrimoineChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#94a3b8',
-                                font: { family: 'Inter', size: 11 },
-                                boxWidth: 12,
-                                padding: 15
-                            }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ` ${context.label}: ${formatCurrency(context.raw)}`;
-                                }
-                            }
+        function toggleValidateMonth(idx) {
+            strategyMonths[idx].validated = !strategyMonths[idx].validated;
+            renderStrategy();
+        }
+
+        function openMonthConfigModal(idx) {
+            activeEditingMonthIdx = idx;
+            document.getElementById('month-modal-title').innerHTML = `
+                <i data-lucide="sliders" class="w-4 h-4 text-indigo-400"></i> Configuration : ${monthNames[idx]}
+            `;
+            renderMonthConfigModal();
+            document.getElementById('month-config-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function closeMonthConfigModal() {
+            document.getElementById('month-config-modal').classList.add('hidden');
+            activeEditingMonthIdx = null;
+        }
+
+        function renderMonthConfigModal() {
+            if(activeEditingMonthIdx === null) return;
+            const container = document.getElementById('month-envelopes-container');
+            const m = strategyMonths[activeEditingMonthIdx];
+
+            let html = '';
+            m.envelopes.forEach((env, index) => {
+                html += `
+                    <div class="space-y-1.5 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        <div class="flex gap-2 items-center">
+                            <input type="text" value="${env.name || ''}" data-m-env-name="${index}" class="w-1/3 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none" placeholder="Enveloppe (ex: PEA)">
+                            <input type="text" value="${env.asset || ''}" data-m-env-asset="${index}" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-xs text-indigo-300 focus:border-indigo-500 focus:outline-none" placeholder="Actif (ex: Air Liquide)">
+                        </div>
+                        <div class="flex gap-2 items-center justify-between">
+                            <div class="relative flex-1">
+                                <input type="number" value="${env.amount}" data-m-env-amount="${index}" class="w-full bg-slate-900 border border-slate-800 rounded-lg pr-7 pl-2.5 py-1.5 text-xs text-white font-semibold focus:border-indigo-500 focus:outline-none" placeholder="Montant">
+                                <span class="absolute right-2.5 top-1.5 text-xs text-slate-500">€</span>
+                            </div>
+                            <button onclick="removeMonthEnvelopeField(${index})" class="text-slate-500 hover:text-rose-400 p-1">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function saveCurrentMonthInputs() {
+            if(activeEditingMonthIdx === null) return;
+            const nameInputs = document.querySelectorAll('[data-m-env-name]');
+            const assetInputs = document.querySelectorAll('[data-m-env-asset]');
+            const amountInputs = document.querySelectorAll('[data-m-env-amount]');
+
+            let updated = [];
+            nameInputs.forEach((input, index) => {
+                const name = input.value.trim();
+                const asset = assetInputs[index] ? assetInputs[index].value.trim() : '';
+                const amount = parseFloat(amountInputs[index].value) || 0;
+                if(name || asset) {
+                    updated.push({ name, asset, amount });
+                }
+            });
+            strategyMonths[activeEditingMonthIdx].envelopes = updated;
+        }
+
+        function addMonthEnvelopeField() {
+            saveCurrentMonthInputs();
+            strategyMonths[activeEditingMonthIdx].envelopes.push({ name: 'PEA', asset: 'MSCI World', amount: 100 });
+            renderMonthConfigModal();
+        }
+
+        function removeMonthEnvelopeField(index) {
+            saveCurrentMonthInputs();
+            strategyMonths[activeEditingMonthIdx].envelopes.splice(index, 1);
+            renderMonthConfigModal();
+        }
+
+        function copyCurrentMonthToAll() {
+            saveCurrentMonthInputs();
+            const currentEnvelopes = strategyMonths[activeEditingMonthIdx].envelopes;
+            strategyMonths.forEach(m => {
+                m.envelopes = JSON.parse(JSON.stringify(currentEnvelopes));
+            });
+            closeMonthConfigModal();
+            renderStrategy();
+        }
+
+        function saveMonthConfig() {
+            saveCurrentMonthInputs();
+            closeMonthConfigModal();
+            renderStrategy();
+        }
+
+        function updatePatrimoineFromStrategy() {
+            let totalRealized = 0;
+            let envelopeBreakdown = {};
+
+            strategyMonths.forEach(m => {
+                if(m.validated) {
+                    m.envelopes.forEach(e => {
+                        totalRealized += e.amount;
+                        const label = e.asset ? `${e.name} (${e.asset})` : e.name;
+                        if(!envelopeBreakdown[label]) {
+                            envelopeBreakdown[label] = 0;
                         }
-                    },
-                    cutout: '72%'
-                }
-            });
-        }
-
-        // Update Chart Data based on asset categories
-        function updateChartData() {
-            const assetCategories = categories.asset;
-            let labels = [];
-            let data = [];
-            let bgColors = [];
-
-            assetCategories.forEach(cat => {
-                const catTotal = items
-                    .filter(i => i.type === 'asset' && i.category === cat.id)
-                    .reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
-                
-                if(catTotal > 0) {
-                    labels.push(cat.name);
-                    data.push(catTotal);
-                    bgColors.push(cat.color);
+                        envelopeBreakdown[label] += e.amount;
+                    });
                 }
             });
 
-            if(data.length === 0) {
-                labels = ['Aucun actif'];
-                data = [1];
-                bgColors = ['#334155'];
-            }
-
-            patrimoineChart.data.labels = labels;
-            patrimoineChart.data.datasets[0].data = data;
-            patrimoineChart.data.datasets[0].backgroundColor = bgColors;
-            patrimoineChart.update();
+            appData.netWorth = totalRealized;
+            appData.envelopeBreakdown = envelopeBreakdown;
         }
 
-        // Render summary pills for categories
-        function updateCategoryCards() {
-            const container = document.getElementById('category-cards-container');
-            container.innerHTML = '';
+        function renderPatrimoine() {
+            updatePatrimoineFromStrategy();
+            const patrimoineContent = document.getElementById('content-patrimoine');
+            const validatedCount = strategyMonths.filter(m => m.validated).length;
 
-            categories.asset.forEach(cat => {
-                const total = items
-                    .filter(i => i.type === 'asset' && i.category === cat.id)
-                    .reduce((sum, i) => sum + (parseFloat(i.amount) || 0), 0);
-
-                if(total > 0) {
-                    container.innerHTML += `
-                        <div class="bg-slate-900 border border-slate-800 p-3.5 rounded-2xl flex items-center space-x-3 shadow">
-                            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-white" style="background-color: ${cat.color}20; color: ${cat.color}">
-                                <i class="fa-solid ${cat.icon} text-sm"></i>
-                            </div>
-                            <div class="overflow-hidden">
-                                <span class="text-[11px] text-slate-400 block truncate">${cat.name}</span>
-                                <span class="text-sm font-bold text-white">${formatCurrency(total)}</span>
-                            </div>
+            let breakdownHTML = '';
+            if(appData.envelopeBreakdown && Object.keys(appData.envelopeBreakdown).length > 0) {
+                for(let [name, total] of Object.entries(appData.envelopeBreakdown)) {
+                    breakdownHTML += `
+                        <div class="flex justify-between items-center text-xs p-2.5 bg-slate-950/60 rounded-xl border border-slate-800/80">
+                            <span class="text-slate-200 font-medium">${name}</span>
+                            <span class="font-bold text-indigo-400">${total.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</span>
                         </div>
                     `;
                 }
-            });
-        }
-
-        // Render list of items with filter
-        function renderItems() {
-            const filter = document.getElementById('filter-type').value;
-            const container = document.getElementById('items-list-container');
-            container.innerHTML = '';
-
-            let filtered = items;
-            if(filter !== 'all') {
-                filtered = items.filter(i => i.type === filter);
+            } else {
+                breakdownHTML = '<p class="text-xs text-slate-500 py-2">Aucun investissement validé dans la Stratégie pour le moment.</p>';
             }
 
-            if(filtered.length === 0) {
-                container.innerHTML = `
-                    <div class="text-center py-10 bg-slate-900 rounded-3xl border border-slate-800">
-                        <i class="fa-solid fa-folder-open text-3xl text-slate-600 mb-2"></i>
-                        <p class="text-sm text-slate-400">Aucun élément trouvé.</p>
+            if (patrimoineContent) {
+                patrimoineContent.innerHTML = `
+                    <div class="p-5 rounded-2xl bg-gradient-to-br from-indigo-900/50 to-slate-900 border border-indigo-500/30 shadow-lg space-y-2">
+                        <span class="text-xs font-medium text-indigo-300 uppercase tracking-wider">Patrimoine Net Cumulé (Stratégie)</span>
+                        <div class="text-3xl font-extrabold text-white">${appData.netWorth.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</div>
+                        <div class="text-xs text-slate-400">${validatedCount} / 12 mois d'investissements validés en ${new Date().getFullYear()}</div>
+                    </div>
+
+                    <div class="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-3">
+                        <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Répartition de votre patrimoine accumulé</h4>
+                        ${breakdownHTML}
                     </div>
                 `;
-                return;
+            }
+        }
+
+        function startCashflowWizard() {
+            currentWizardStep = 0;
+            renderWizardStep();
+            document.getElementById('wizard-modal').classList.remove('hidden');
+        }
+
+        function closeWizard() {
+            document.getElementById('wizard-modal').classList.add('hidden');
+        }
+
+        function renderWizardStep() {
+            const step = wizardSteps[currentWizardStep];
+            document.getElementById('wizard-step-tag').textContent = `Étape ${currentWizardStep + 1} sur ${wizardSteps.length}`;
+            document.getElementById('wizard-step-title').textContent = step.title;
+            document.getElementById('wizard-step-desc').textContent = step.desc;
+
+            const progressBar = document.getElementById('wizard-progress-bar');
+            progressBar.style.width = `${((currentWizardStep + 1) / wizardSteps.length) * 100}%`;
+
+            document.getElementById('wizard-btn-prev').disabled = (currentWizardStep === 0);
+            document.getElementById('wizard-btn-next').textContent = (currentWizardStep === wizardSteps.length - 1) ? "Terminer & Valider" : "Suivant";
+
+            let currentItems = [];
+            if(step.id === 'revenus') {
+                currentItems = appData.inflows.length > 0 ? appData.inflows : step.defaultFields;
+            } else {
+                let cat = appData.outflows.find(c => c.category === step.categoryName);
+                if(cat && cat.items.length > 0) {
+                    currentItems = cat.items;
+                } else {
+                    currentItems = step.defaultFields;
+                }
             }
 
-            filtered.forEach(item => {
-                const isAsset = item.type === 'asset';
-                const catList = isAsset ? categories.asset : categories.liability;
-                const catObj = catList.find(c => c.id === item.category) || { name: 'Autre', icon: 'fa-tag', color: '#64748b' };
-
-                container.innerHTML += `
-                    <div class="bg-slate-900 border border-slate-800 p-4 rounded-2xl flex items-center justify-between shadow hover:border-slate-700 transition">
-                        <div class="flex items-center space-x-3 overflow-hidden">
-                            <div class="w-10 h-10 rounded-xl flex-shrink-0 flex items-center justify-center" style="background-color: ${catObj.color}20; color: ${catObj.color}">
-                                <i class="fa-solid ${catObj.icon}"></i>
-                            </div>
-                            <div class="overflow-hidden">
-                                <h4 class="font-semibold text-sm text-white truncate">${escapeHtml(item.name)}</h4>
-                                <div class="flex items-center space-x-2 text-xs text-slate-400">
-                                    <span class="px-2 py-0.5 rounded-md bg-slate-800 text-slate-300 font-medium">${catObj.name}</span>
-                                    ${item.notes ? `<span class="truncate">• ${escapeHtml(item.notes)}</span>` : ''}
-                                </div>
-                            </div>
+            let html = '';
+            currentItems.forEach((item, index) => {
+                html += `
+                    <div class="flex gap-2 items-center bg-slate-950/60 p-2.5 rounded-xl border border-slate-800">
+                        <input type="text" value="${item.name}" data-wiz-name="${index}" class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-white focus:border-indigo-500 focus:outline-none placeholder-slate-500" placeholder="Nom du poste">
+                        <div class="relative w-28">
+                            <input type="number" value="${item.amount}" data-wiz-amount="${index}" class="w-full bg-slate-900 border border-slate-800 rounded-lg pr-7 pl-2.5 py-1.5 text-xs text-white font-semibold focus:border-indigo-500 focus:outline-none" placeholder="0">
+                            <span class="absolute right-2.5 top-1.5 text-xs text-slate-500">€</span>
                         </div>
-                        <div class="flex items-center space-x-4 flex-shrink-0">
-                            <span class="font-bold text-sm sm:text-base ${isAsset ? 'text-emerald-400' : 'text-rose-400'}">
-                                ${isAsset ? '+' : '-'} ${formatCurrency(item.amount)}
-                            </span>
-                            <div class="flex space-x-1">
-                                <button onclick="editItem('${item.id}')" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center text-xs transition" title="Modifier">
-                                    <i class="fa-solid fa-pen"></i>
-                                </button>
-                                <button onclick="deleteItem('${item.id}')" class="w-8 h-8 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 flex items-center justify-center text-xs transition" title="Supprimer">
-                                    <i class="fa-solid fa-trash"></i>
-                                </button>
-                            </div>
+                        <button onclick="removeWizardItem(${index})" class="text-slate-500 hover:text-rose-400 p-1">
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+            });
+
+            html += `
+                <button onclick="addWizardItem()" class="w-full py-2 border border-dashed border-indigo-500/30 rounded-xl text-indigo-400 text-xs font-medium hover:bg-indigo-500/10 transition flex items-center justify-center gap-1.5 mt-2">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Ajouter une ligne personnalisée
+                </button>
+            `;
+
+            document.getElementById('wizard-content').innerHTML = html;
+            lucide.createIcons();
+        }
+
+        function saveCurrentWizardStep() {
+            const step = wizardSteps[currentWizardStep];
+            const nameInputs = document.querySelectorAll('[data-wiz-name]');
+            const amountInputs = document.querySelectorAll('[data-wiz-amount]');
+
+            let items = [];
+            nameInputs.forEach((input, index) => {
+                const name = input.value.trim();
+                const amount = parseFloat(amountInputs[index].value) || 0;
+                if(name) {
+                    items.push({ name, amount });
+                }
+            });
+
+            if(step.id === 'revenus') {
+                appData.inflows = items;
+            } else {
+                let catIndex = appData.outflows.findIndex(c => c.category === step.categoryName);
+                if(catIndex >= 0) {
+                    appData.outflows[catIndex].items = items;
+                } else {
+                    appData.outflows.push({ category: step.categoryName, items });
+                }
+            }
+        }
+
+        function addWizardItem() {
+            saveCurrentWizardStep();
+            const step = wizardSteps[currentWizardStep];
+            if(step.id === 'revenus') {
+                appData.inflows.push({ name: 'Autre source de revenu', amount: 0 });
+            } else {
+                let cat = appData.outflows.find(c => c.category === step.categoryName);
+                if(!cat) {
+                    cat = { category: step.categoryName, items: [] };
+                    appData.outflows.push(cat);
+                }
+                cat.items.push({ name: 'Autre dépense / poste', amount: 0 });
+            }
+            renderWizardStep();
+        }
+
+        function removeWizardItem(index) {
+            saveCurrentWizardStep();
+            const step = wizardSteps[currentWizardStep];
+            if(step.id === 'revenus') {
+                appData.inflows.splice(index, 1);
+            } else {
+                let cat = appData.outflows.find(c => c.category === step.categoryName);
+                if(cat) cat.items.splice(index, 1);
+            }
+            renderWizardStep();
+        }
+
+        function nextWizardStep() {
+            saveCurrentWizardStep();
+            if(currentWizardStep < wizardSteps.length - 1) {
+                currentWizardStep++;
+                renderWizardStep();
+            } else {
+                closeWizard();
+                renderCashflow();
+                runSimulator();
+            }
+        }
+
+        function prevWizardStep() {
+            saveCurrentWizardStep();
+            if(currentWizardStep > 0) {
+                currentWizardStep--;
+                renderWizardStep();
+            }
+        }
+
+        function renderCashflow() {
+            let totalIn = 0;
+            let listInHTML = '';
+            appData.inflows.forEach(item => {
+                totalIn += item.amount;
+                listInHTML += `
+                    <div class="flex justify-between items-center text-xs bg-slate-950/40 p-2 rounded-lg">
+                        <span class="text-slate-300">${item.name}</span>
+                        <span class="font-semibold text-emerald-400">${item.amount.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</span>
+                    </div>
+                `;
+            });
+            document.getElementById('finary-total-in').textContent = totalIn.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('finary-list-in').innerHTML = listInHTML;
+
+            let totalOut = 0;
+            let totalNonInvestExpenses = 0;
+            let totalInvestments = 0;
+            let listOutHTML = '';
+
+            appData.outflows.forEach(cat => {
+                let catTotal = cat.items.reduce((acc, sub) => acc + sub.amount, 0);
+                totalOut += catTotal;
+
+                if(cat.category.toLowerCase().includes('investissement')) {
+                    totalInvestments += catTotal;
+                } else {
+                    totalNonInvestExpenses += catTotal;
+                }
+
+                let subItemsHTML = '';
+                cat.items.forEach(sub => {
+                    subItemsHTML += `
+                        <div class="flex justify-between items-center text-[11px] text-slate-400 py-0.5">
+                            <span>↳ ${sub.name}</span>
+                            <span>${sub.amount.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</span>
+                        </div>
+                    `;
+                });
+
+                listOutHTML += `
+                    <div class="bg-slate-950/50 p-2.5 rounded-xl border border-slate-800/60 space-y-1">
+                        <div class="flex justify-between items-center text-xs font-semibold text-white">
+                            <span>${cat.category}</span>
+                            <span class="${cat.category.toLowerCase().includes('investissement') ? 'text-indigo-400' : 'text-rose-400'}">${catTotal.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'})}</span>
+                        </div>
+                        <div class="pl-2 border-l border-slate-800 space-y-1 mt-1">
+                            ${subItemsHTML}
                         </div>
                     </div>
                 `;
             });
-        }
 
-        // Modal open/close controls
-        function openModal(editId = null) {
-            const modal = document.getElementById('item-modal');
-            modal.classList.remove('hidden');
-            document.getElementById('item-form').reset();
-            document.getElementById('item-id').value = '';
+            document.getElementById('finary-total-out').textContent = totalOut.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('finary-list-out').innerHTML = listOutHTML;
 
-            if(editId) {
-                document.getElementById('modal-title').innerText = 'Modifier le poste';
-                const item = items.find(i => i.id === editId);
-                if(item) {
-                    document.getElementById('item-id').value = item.id;
-                    document.getElementById('item-name').value = item.name;
-                    document.getElementById('item-type').value = item.type;
-                    updateCategoryOptions();
-                    document.getElementById('item-category').value = item.category;
-                    document.getElementById('item-amount').value = item.amount;
-                    document.getElementById('item-notes').value = item.notes || '';
-                }
-            } else {
-                document.getElementById('modal-title').innerText = 'Ajouter un poste';
-                updateCategoryOptions();
+            const capacity = totalIn - totalNonInvestExpenses;
+            const savingsRate = totalIn > 0 ? Math.round((capacity / totalIn) * 100) : 0;
+
+            document.getElementById('summary-income').textContent = totalIn.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('summary-expenses').textContent = totalNonInvestExpenses.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'});
+            document.getElementById('summary-savings-capacity').textContent = capacity.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR'}) + ' / mois';
+            document.getElementById('summary-rate').textContent = `Taux d'épargne : ${savingsRate}%`;
+
+            const simMonthlyInput = document.getElementById('sim-monthly');
+            if(simMonthlyInput) {
+                simMonthlyInput.value = totalInvestments > 0 ? totalInvestments : Math.max(0, capacity);
             }
         }
 
-        function closeModal() {
-            document.getElementById('item-modal').classList.add('hidden');
-        }
-
-        // Update category select options based on Asset vs Liability type
-        function updateCategoryOptions() {
-            const type = document.getElementById('item-type').value;
-            const select = document.getElementById('item-category');
-            select.innerHTML = '';
-
-            const list = type === 'asset' ? categories.asset : categories.liability;
-            list.forEach(cat => {
-                select.innerHTML += `<option value="${cat.id}">${cat.name}</option>`;
+        function openCashflowModal() {
+            let inHTML = '';
+            appData.inflows.forEach((item, index) => {
+                inHTML += `
+                    <div class="flex gap-2 items-center">
+                        <input type="text" value="${item.name}" data-type="in-name" data-index="${index}" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white">
+                        <input type="number" value="${item.amount}" data-type="in-amount" data-index="${index}" class="w-24 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white">
+                        <button onclick="removeCashflowItem('in', ${index})" class="text-rose-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+                    </div>
+                `;
             });
+            document.getElementById('modal-inputs-container').innerHTML = inHTML;
+
+            let outHTML = '';
+            appData.outflows.forEach((cat, catIndex) => {
+                let subHTML = '';
+                cat.items.forEach((sub, subIndex) => {
+                    subHTML += `
+                        <div class="flex gap-2 items-center pl-4 border-l border-slate-800 my-1">
+                            <input type="text" value="${sub.name}" data-cat="${catIndex}" data-sub="${subIndex}" data-field="name" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300">
+                            <input type="number" value="${sub.amount}" data-cat="${catIndex}" data-sub="${subIndex}" data-field="amount" class="w-20 bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-xs text-slate-300">
+                            <button onclick="removeSubItem(${catIndex}, ${subIndex})" class="text-rose-400 p-1"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+                        </div>
+                    `;
+                });
+
+                outHTML += `
+                    <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2">
+                        <div class="flex justify-between items-center">
+                            <input type="text" value="${cat.category}" data-cat-title="${catIndex}" class="bg-transparent font-semibold text-xs text-white focus:outline-none border-b border-transparent focus:border-indigo-500">
+                            <button onclick="addSubItem(${catIndex})" class="text-xs text-indigo-400 hover:text-indigo-300">+ Sous-poste</button>
+                        </div>
+                        <div class="space-y-1">${subHTML}</div>
+                    </div>
+                `;
+            });
+            document.getElementById('modal-outputs-container').innerHTML = outHTML;
+            document.getElementById('cashflow-modal').classList.remove('hidden');
+            lucide.createIcons();
         }
 
-        // Save (Add or Update) item
-        function saveItem(e) {
-            e.preventDefault();
-            const id = document.getElementById('item-id').value;
-            const name = document.getElementById('item-name').value;
-            const type = document.getElementById('item-type').value;
-            const category = document.getElementById('item-category').value;
-            const amount = parseFloat(document.getElementById('item-amount').value) || 0;
-            const notes = document.getElementById('item-notes').value;
+        function closeCashflowModal() {
+            document.getElementById('cashflow-modal').classList.add('hidden');
+        }
 
-            if(id) {
-                const index = items.findIndex(i => i.id === id);
-                if(index !== -1) {
-                    items[index] = { id, name, type, category, amount, notes };
+        function addCashflowItem(type) {
+            if(type === 'in') {
+                appData.inflows.push({ name: "Nouveau revenu", amount: 0 });
+            }
+            openCashflowModal();
+        }
+
+        function addSubItem(catIndex) {
+            appData.outflows[catIndex].items.push({ name: "Nouveau poste", amount: 0 });
+            openCashflowModal();
+        }
+
+        function removeCashflowItem(type, index) {
+            appData.inflows.splice(index, 1);
+            openCashflowModal();
+        }
+
+        function removeSubItem(catIndex, subIndex) {
+            appData.outflows[catIndex].items.splice(subIndex, 1);
+            openCashflowModal();
+        }
+
+        function saveCashflowDetailed() {
+            const inNames = document.querySelectorAll('[data-type="in-name"]');
+            const inAmounts = document.querySelectorAll('[data-type="in-amount"]');
+            
+            appData.inflows = [];
+            for(let i=0; i<inNames.length; i++) {
+                appData.inflows.push({
+                    name: inNames[i].value || "Revenu",
+                    amount: parseFloat(inAmounts[i].value) || 0
+                });
+            }
+
+            const catTitles = document.querySelectorAll('[data-cat-title]');
+            appData.outflows.forEach((cat, catIndex) => {
+                if(catTitles[catIndex]) {
+                    cat.category = catTitles[catIndex].value || "Catégorie";
                 }
-                showToast("Poste mis à jour avec succès !");
-            } else {
-                const newItem = {
-                    id: Date.now().toString(),
-                    name, type, category, amount, notes
-                };
-                items.push(newItem);
-                showToast("Nouveau poste ajouté !");
+                cat.items.forEach((sub, subIndex) => {
+                    const nameInput = document.querySelector(`[data-cat="${catIndex}"][data-sub="${subIndex}"][data-field="name"]`);
+                    const amountInput = document.querySelector(`[data-cat="${catIndex}"][data-sub="${subIndex}"][data-field="amount"]`);
+                    if(nameInput) sub.name = nameInput.value;
+                    if(amountInput) sub.amount = parseFloat(amountInput.value) || 0;
+                });
+            });
+
+            renderCashflow();
+            runSimulator();
+            closeCashflowModal();
+        }
+
+        function runSimulator() {
+            const P = parseFloat(document.getElementById('sim-capital').value) || 0;
+            const PMT = parseFloat(document.getElementById('sim-monthly').value) || 0;
+            const annualRate = (parseFloat(document.getElementById('sim-rate').value) || 0) / 100;
+            const years = parseInt(document.getElementById('sim-years').value) || 10;
+
+            document.getElementById('sim-years-val').textContent = years;
+            document.getElementById('chart-label-start').textContent = 'An 0';
+            document.getElementById('chart-label-mid').textContent = `An ${Math.round(years/2)}`;
+            document.getElementById('chart-label-end').textContent = `An ${years}`;
+
+            const r = annualRate / 12;
+            const n = years * 12;
+
+            let yearlyData = [];
+            let maxVal = 0;
+
+            for(let y = 0; y <= years; y++) {
+                const months = y * 12;
+                let val = P * Math.pow(1 + r, months);
+                if (r > 0) {
+                    val += PMT * ((Math.pow(1 + r, months) - 1) / r);
+                } else {
+                    val += PMT * months;
+                }
+                yearlyData.push(val);
+                if(val > maxVal) maxVal = val;
             }
 
-            closeModal();
-            updateDashboard();
-            renderItems();
+            const futureValue = yearlyData[yearlyData.length - 1];
+            const totalInvested = P + (PMT * n);
+            const totalInterest = futureValue - totalInvested;
+
+            document.getElementById('sim-result').textContent = futureValue.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+            document.getElementById('sim-invested').textContent = totalInvested.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+            document.getElementById('sim-interest').textContent = totalInterest.toLocaleString('fr-FR', {style: 'currency', currency: 'EUR', maximumFractionDigits: 0});
+
+            const svg = document.getElementById('sim-chart');
+            const svgWidth = 300;
+            const svgHeight = 120;
+            
+            if(maxVal === 0) maxVal = 1;
+
+            let points = "";
+            let areaPoints = `0,${svgHeight} `;
+
+            yearlyData.forEach((val, idx) => {
+                const x = (idx / years) * svgWidth;
+                const y = svgHeight - (val / maxVal) * (svgHeight - 10) - 5;
+                points += `${x},${y} `;
+                areaPoints += `${x},${y} `;
+            });
+            areaPoints += `${svgWidth},${svgHeight}`;
+
+            svg.innerHTML = `
+                <defs>
+                    <linearGradient id="chartGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.3"/>
+                        <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.0"/>
+                    </linearGradient>
+                </defs>
+                <polygon points="${areaPoints}" fill="url(#chartGrad)" />
+                <polyline fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${points}" />
+            `;
         }
 
-        // Edit item shortcut
-        function editItem(id) {
-            openModal(id);
-        }
-
-        // Delete item with custom confirmation feedback
-        function deleteItem(id) {
-            if(confirm("Êtes-vous sûr de vouloir supprimer ce poste ?")) {
-                items = items.filter(i => i.id !== id);
-                updateDashboard();
-                renderItems();
-                showToast("Poste supprimé.");
-            }
-        }
-
-        // Toast notification helper
-        function showToast(msg) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-msg').innerText = msg;
-            toast.classList.remove('opacity-0', 'pointer-events-none');
-            setTimeout(() => {
-                toast.classList.add('opacity-0', 'pointer-events-none');
-            }, 2500);
-        }
-
-        // Export data to JSON file
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(items, null, 2));
-            const downloadAnchor = document.createElement('a');
-            downloadAnchor.setAttribute("href", dataStr);
-            downloadAnchor.setAttribute("download", `patrimoine_backup_${new Date().toISOString().slice(0,10)}.json`);
-            document.body.appendChild(downloadAnchor);
-            downloadAnchor.click();
-            downloadAnchor.remove();
-            showToast("Sauvegarde exportée !");
-        }
-
-        // Import data from JSON file
-        function importData(event) {
-            const fileReader = new FileReader();
-            if(event.target.files[0]) {
-                fileReader.readAsText(event.target.files[0], "UTF-8");
-                fileReader.onload = (e) => {
-                    try {
-                        const parsed = JSON.parse(e.target.result);
-                        if(Array.isArray(parsed)) {
-                            items = parsed;
-                            updateDashboard();
-                            renderItems();
-                            showToast("Données importées avec succès !");
-                        } else {
-                            alert("Format de fichier invalide.");
-                        }
-                    } catch(err) {
-                        alert("Erreur lors de la lecture du fichier JSON.");
-                    }
-                };
-            }
-        }
-
-        // Security escape helper
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
+        window.addEventListener('DOMContentLoaded', () => {
+            renderCashflow();
+            runSimulator();
+            renderStrategy();
+            renderPatrimoine();
+            renderFees();
+            renderObjectives();
+        });
     </script>
 </body>
 </html>
